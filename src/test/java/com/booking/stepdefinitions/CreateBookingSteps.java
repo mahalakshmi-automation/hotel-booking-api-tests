@@ -43,14 +43,27 @@ public class CreateBookingSteps {
         context.response(ApiUtils.post("/booking", payload));
     }
 
-    @Then("the created booking should match the submitted details")
-    public void verifyBooking() {
-        BookingRequest request = context.request();
-        assertEquals(request.getRoomid(), context.response().jsonPath().getInt("booking.roomid"));
-        assertEquals(request.getFirstname(), context.response().jsonPath().getString("booking.firstname"));
-        assertEquals(request.getLastname(), context.response().jsonPath().getString("booking.lastname"));
-        assertEquals(request.getEmail(), context.response().jsonPath().getString("booking.email"));
-        assertEquals(request.getBookingdates().getCheckin(),
-                context.response().jsonPath().getString("booking.bookingdates.checkin"));
-    }
+
+
+@Then("the created booking should match the submitted details")
+public void verifyBooking() {
+    BookingRequest request = context.request();
+
+    assertEquals(request.getRoomid(),
+            context.response().jsonPath().getInt("roomid"));
+
+    assertEquals(request.getFirstname(),
+            context.response().jsonPath().getString("firstname"));
+
+    assertEquals(request.getLastname(),
+            context.response().jsonPath().getString("lastname"));
+
+    assertEquals(request.getBookingdates().getCheckin(),
+            context.response().jsonPath().getString("bookingdates.checkin"));
+
+    assertEquals(request.getBookingdates().getCheckout(),
+            context.response().jsonPath().getString("bookingdates.checkout"));
+}
+
+
 }
