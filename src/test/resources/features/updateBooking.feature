@@ -1,3 +1,4 @@
+@known-service-issue
 @booking @update
 Feature: Update an existing booking
 

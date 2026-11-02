@@ -1,3 +1,4 @@
+@known-service-issue
 @booking @delete
 Feature: Delete an existing booking
 

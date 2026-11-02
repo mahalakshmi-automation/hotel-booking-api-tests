@@ -1,3 +1,4 @@
+@known-service-issue
 @health @smoke
 Feature: Booking service availability
 

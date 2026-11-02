@@ -1,3 +1,4 @@
+@known-service-issue
 @booking @get
 Feature: Retrieve an existing booking
 
