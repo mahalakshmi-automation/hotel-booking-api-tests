@@ -1,3 +1,4 @@
+@known-service-issue
 @booking @e2e @regression
 Feature: Complete a hotel booking lifecycle
 

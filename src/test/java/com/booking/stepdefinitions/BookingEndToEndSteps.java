@@ -26,15 +26,18 @@ public class BookingEndToEndSteps {
         String path = "/booking/" + context.bookingId();
         context.token(ApiUtils.loginToken());
         assertEquals(200, ApiUtils.get(path, context.token()).statusCode(), "Booking should be readable");
+
         context.request().setLastname("UpdatedGuest");
         assertEquals(200, ApiUtils.put(path, context.request(), context.token()).statusCode(),
                 "Booking update should succeed");
-        assertEquals("UpdatedGuest", ApiUtils.get(path, context.token()).jsonPath().getString("lastname"));
+        assertEquals("UpdatedGuest", ApiUtils.get(path, context.token())
+                .jsonPath().getString("lastname"));
         context.response(ApiUtils.delete(path, context.token()));
     }
 
     @Then("the deleted booking should no longer be available")
     public void deleted() {
-        assertEquals(404, ApiUtils.get("/booking/" + context.bookingId(), context.token()).statusCode());
+        assertEquals(404, ApiUtils.get("/booking/" + context.bookingId(), context.token()).statusCode(),
+                "Deleted booking should not be retrievable");
     }
 }
