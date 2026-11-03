@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 /** Test setup: retries a genuine room/date conflict with a new availability selection. */
 public final class BookingFixtures {
     private static final Logger LOG = LoggerFactory.getLogger(BookingFixtures.class);
-    private static final int MAX_CONFLICT_ATTEMPTS = 5;
+    private static final int MAX_CONFLICT_ATTEMPTS = 8;
 
     private BookingFixtures() { }
 
@@ -27,7 +27,7 @@ public final class BookingFixtures {
             if (response.statusCode() != 409) {
                 throw new IllegalStateException("Booking setup failed (HTTP " + response.statusCode() + "): " + response.asString());
             }
-            LOG.warn("Booking date collision on room {} (attempt {}/{}); trying new available dates",
+            LOG.warn("Booking collision on room {} (attempt {}/{}); trying another catalogue room/date",
                     request.getRoomid(), attempt, MAX_CONFLICT_ATTEMPTS);
         }
         throw new IllegalStateException("Booking setup received HTTP 409 on all " + MAX_CONFLICT_ATTEMPTS

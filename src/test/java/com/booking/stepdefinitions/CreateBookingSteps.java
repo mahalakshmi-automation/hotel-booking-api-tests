@@ -21,7 +21,7 @@ public class CreateBookingSteps {
 
 	@When("I submit a booking for {string} {string} arriving in {int} days for {int} nights")
 	public void createBookingWithExamples(String firstName, String lastName, int checkInAfterDays, int nights) {
-        for (int attempt = 1; attempt <= 5; attempt++) {
+        for (int attempt = 1; attempt <= 8; attempt++) {
             BookingRequest request = TestData.booking(firstName, lastName,
                     checkInAfterDays + (attempt - 1) * 14, nights);
             submit(request);

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Obtains a valid room and an unoccupied date range from the running demo service.
  * No booking is created here; the Cucumber step owns the POST and assertions.
@@ -19,6 +20,7 @@ public final class BookingAvailability {
     private static final Logger LOG = LoggerFactory.getLogger(BookingAvailability.class);
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final List<OccupiedStay> RESERVED_IN_THIS_RUN = new ArrayList<>();
+    private static final AtomicInteger NEXT_ROOM = new AtomicInteger();
 
     private BookingAvailability() { }
 
@@ -31,24 +33,38 @@ public final class BookingAvailability {
         if (roomIds == null || roomIds.isEmpty()) {
             throw new IllegalStateException("Rooms API returned no rooms");
         }
-        // The live /booking/summary API requires a valid token cookie.
-        String token = ApiUtils.loginToken();
-        for (int roomId : roomIds.stream().distinct().sorted(Comparator.naturalOrder()).toList()) {
-            Response summary = ApiUtils.get("/booking/summary?roomid=" + roomId, token);
-            if (summary.statusCode() != 200) {
-                LOG.warn("Skipping room {}: summary returned HTTP {}", roomId, summary.statusCode());
-                continue;
+        // Booking creation must not depend on the optional administrative summary service.
+        // Shared demo services can return HTTP 500 for summary/auth calls.
+        String token = null;
+        try {
+            token = ApiUtils.loginToken();
+        } catch (RuntimeException exception) {
+            LOG.warn("Booking summary authentication unavailable; using published rooms and local date tracking");
+        }
+        List<Integer> candidates = roomIds.stream().distinct().sorted(Comparator.naturalOrder()).toList();
+        // Start each selection from a different real room. A 409 retry should not
+        // repeatedly attempt the same room when its summary is unavailable.
+        int start = Math.floorMod(NEXT_ROOM.getAndIncrement(), candidates.size());
+        for (int position = 0; position < candidates.size(); position++) {
+            int roomId = candidates.get((start + position) % candidates.size());
+            List<OccupiedStay> existing = new ArrayList<>();
+            if (token != null) {
+                try {
+                    Response summary = ApiUtils.get("/booking/summary?roomid=" + roomId, token);
+                    if (summary.statusCode() == 200) {
+                        existing = extractStays(JSON.readTree(summary.asString()), roomId);
+                    } else {
+                        LOG.warn("Room {} summary returned HTTP {}; using locally reserved dates", roomId, summary.statusCode());
+                    }
+                } catch (Exception exception) {
+                    LOG.warn("Room {} summary unavailable; using locally reserved dates", roomId);
+                }
             }
-            List<OccupiedStay> existing;
-            try {
-                existing = extractStays(JSON.readTree(summary.asString()), roomId);
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot parse availability response for room " + roomId, e);
-            }
+            final List<OccupiedStay> occupied = existing;
             for (int offset = Math.max(1, earliestDays); offset <= Math.max(365, earliestDays + 90); offset++) {
                 LocalDate checkin = LocalDate.now().plusDays(offset);
                 LocalDate checkout = checkin.plusDays(nights);
-                if (existing.stream().noneMatch(stay -> stay.overlaps(roomId, checkin, checkout))
+                if (occupied.stream().noneMatch(stay -> stay.overlaps(roomId, checkin, checkout))
                         && RESERVED_IN_THIS_RUN.stream().noneMatch(stay -> stay.overlaps(roomId, checkin, checkout))) {
                     RESERVED_IN_THIS_RUN.add(new OccupiedStay(roomId, checkin, checkout));
                     LOG.info("Selected room {} with available stay {} to {}", roomId, checkin, checkout);
