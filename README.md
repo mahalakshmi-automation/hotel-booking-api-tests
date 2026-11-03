@@ -1,93 +1,198 @@
-# Hotel Booking API Tests
+# Hotel Booking API Automation Framework
 
-Java 17 API regression tests for the [Restful Booker Platform](https://automationintesting.online/), using REST Assured, Cucumber, JUnit Platform and Maven.
+An API test automation project for the [Restful Booker Platform](https://automationintesting.online/), built with **Java 17, REST Assured, Cucumber BDD, JUnit 5 and Maven**.
 
-## Structure
+The tests cover hotel booking operations, administrator authentication and room information. Feature files use Given–When–Then steps so that the expected behaviour is easy to read and maintain.
 
-- `models`: Lombok POJOs serialized by Jackson
-- `utils`: configuration, API requests, room availability selection, scenario context and test-data builders
-- `stepdefinitions`: business-readable Cucumber steps and assertions
-- `hooks`: SLF4J scenario logging
-- `src/test/resources/features`: Gherkin scenarios, including scenario outlines
-- `src/test/resources/schemas`: response JSON schema
+## ✅ Features
 
-## Configuration
+- Create, retrieve, update and delete hotel bookings
+- Positive and negative test scenarios, including missing and invalid request data
+- Administrator login and access-control checks
+- Room listing and room-detail validations
+- End-to-end booking lifecycle scenario
+- Response status, response fields and JSON schema validation
+- Reusable request utilities, POJO models and Cucumber hooks
+- Cucumber HTML and JSON execution reports
 
-Default non-production values are in `src/test/resources/config.properties`.
-Override with Maven properties such as `-Dbase.url=...` or environment variables such as `BASE_URL`. Do not commit real credentials.
+## 🧰 Technology Stack
 
-## Execution
+| Technology | Purpose |
+| --- | --- |
+| Java 17 | Programming language |
+| Maven | Dependency management and test execution |
+| REST Assured 5.5.2 | API requests and response handling |
+| Cucumber 7.22.2 | BDD scenarios written in Gherkin |
+| JUnit 5 / JUnit Platform | Test execution |
+| Jackson and Lombok | JSON mapping and request models |
+| JSON Schema Validator | Response structure validation |
+| SLF4J and Logback | Test execution logging |
 
-Run all scenarios with `mvn clean test`.
-Run positive creation scenarios with `mvn clean test -Dcucumber.filter.tags='@create and @positive'`.
-Run scenarios excluding **known external service failures** with `mvn clean test -Dcucumber.filter.tags='not @known-service-issue'`. Note: remaining untagged scenarios can still fail if the service changes.
+## 🧪 API Test Coverage
 
-Test failures are not suppressed: scenarios marked `@known-service-issue` still run in the full suite. They are tagged to distinguish observed server behavior from local framework problems.
+| Area | Scenarios covered |
+| --- | --- |
+| Create Booking | Valid bookings, required fields, optional fields and invalid data |
+| Get Booking | Retrieve an existing booking and handle a non-existent booking |
+| Update Booking | Change guest details, with and without authentication |
+| Delete Booking | Delete an existing booking, with and without authentication |
+| Authentication | Successful login and invalid credentials |
+| Room API | Room listing, IDs, names, types, prices, facilities and other room details |
+| End-to-End | Create, retrieve, update and delete a booking |
+| Health Check | Check the booking service health response |
 
-## Reports
+Scenarios are organised into separate `.feature` files. A `Scenario Outline` runs once for each row in its `Examples` table.
 
-Surefire results: `target/surefire-reports/`. Cucumber reports are configured in `TestRunner`.
+## 🚀 Getting Started
 
-## External API limitations
+### Prerequisites
 
-The public booking service has returned HTTP 500 on GET `/booking/{id}` and health requests, and intermittent HTTP 409 on booking creation. Negative validation behavior also differs from the bundled OpenAPI specification. The tests preserve expected contract assertions; these issues require service-side investigation.
+- Java 17 or later
+- Maven installed and available in your terminal
+- Eclipse IDE or another Java IDE with Maven support
 
-## Important note about negative tests
-The published API description treats `email` and `phone` as optional for booking creation. Their absence is tested as a valid request. The publicly hosted service sometimes returns HTTP 500 even for expected validation failures; the tests intentionally report these differences rather than rewriting the expected behavior.
+### Project Setup (Eclipse)
 
-## Room discovery tests
-
-The `roomCatalog.feature` scenarios verify room listing, identifiers, names, types, prices, descriptions, facilities, accessibility and image references. Run them independently with `mvn test -Dcucumber.filter.tags="@room"`. These scenarios do not create or change bookings.
-
-## Coverage overview
-
-The feature files cover booking creation, retrieval, updates, deletion,
-authentication, health, room catalogue discovery and a complete booking lifecycle.
-Scenario Outlines produce separate executions for each example row.
-
-Run room catalogue checks independently with `mvn test -Dcucumber.filter.tags="@room"`.
-Use `target/cucumber-reports.html` for actual execution results. The presence of
-scenarios does not imply they pass against the shared demo API.
-
-Room IDs come from `GET /room/`. When the administrative booking-summary API is
-unavailable, the framework uses locally tracked dates and retries HTTP 409 with
-new room/date combinations. That fallback does not guarantee the shared server
-will accept a booking; unexpected responses remain visible as test failures.
-
-## Catalogue coverage against the hosted demo data
-
-The independent room-catalogue tests include example-driven verification that
-published room IDs 1–3, room types Single/Double/Suite, and TV/WiFi/Safe/Radio
-are represented in the catalogue. These expectations reflect observed seed data
-on the public demonstration service; if its inventory is reset, the
-`@catalogue-seed` scenarios may need to be revised based on the latest fixture.
-
-To run only the catalogue tests:
+**1. Clone the repository**
 
 ```bash
-mvn test -Dcucumber.filter.tags='@room'
+git clone https://github.com/mahalakshmi-automation/hotel-booking-api-tests.git
+cd hotel-booking-api-tests
 ```
 
-The Surefire test count is not the expanded Cucumber scenario count; Cucumber's
-`target/cucumber.json` contains one scenario record per executed example row.
-Use the bundled `scripts/coverage_summary.py` to report scenario-level totals.
+**2. Import into Eclipse**
 
+- Select **File → Import → Maven → Existing Maven Projects**.
+- Browse to the cloned project folder containing `pom.xml`.
+- Select the Maven project and click **Finish**.
+- Confirm that the project uses **Java 17**.
 
-## Interpreting test results
+**3. Review the configuration**
 
-Run `mvn clean test` for the complete suite. Scenario Outline example rows count
-as separate Cucumber scenarios; Maven Surefire test totals can differ from the
-expanded Cucumber scenario count. For expanded totals, run
-`python3 scripts/coverage_summary.py` after execution.
+The test configuration is stored in:
 
-The public demo API can return `409 Conflict` when room dates overlap.
-Room selection uses actual IDs obtained from the rooms API, rotates across them
-and tries alternate future dates after a conflict. This does not guarantee an
-available booking on a shared, changing service.
+```text
+src/test/resources/config.properties
+```
 
-An HTTP `500 Internal Server Error` on GET, PUT, DELETE or invalid-input
-requests is recorded as a failed expectation; this project does not convert
-server faults into successes or silently omit the affected scenarios.
+The default API base URL is `https://automationintesting.online/api`. Configuration values can be overridden using Java system properties or environment variables. For example:
 
-For room-catalogue-only diagnostics (not a full suite run):
-`mvn test -Dcucumber.filter.tags="@room"`.
+```bash
+mvn test -Dbase.url=https://automationintesting.online/api
+```
+
+For administrator scenarios, set `AUTH_USERNAME` and `AUTH_PASSWORD` in your environment when appropriate. Do not commit real account credentials.
+
+## ▶️ Running Tests
+
+**Run the complete test suite:**
+
+```bash
+mvn clean test
+```
+
+**Run room information tests:**
+
+```bash
+mvn test -Dcucumber.filter.tags="@room"
+```
+
+**Run booking creation scenarios:**
+
+```bash
+mvn test -Dcucumber.filter.tags="@create"
+```
+
+**Run smoke tests:**
+
+```bash
+mvn test -Dcucumber.filter.tags="@smoke"
+```
+
+**Run positive scenarios:**
+
+```bash
+mvn test -Dcucumber.filter.tags="@positive"
+```
+
+**Run negative scenarios:**
+
+```bash
+mvn test -Dcucumber.filter.tags="@negative"
+```
+
+Tests may also be launched through `src/test/java/com/booking/TestRunner.java` using the IDE's JUnit test support.
+
+## 📁 Project Structure
+
+```text
+hotel-booking-api-tests/
+├── pom.xml
+├── README.md
+└── src/
+    └── test/
+        ├── java/com/booking/
+        │   ├── TestRunner.java
+        │   ├── models/                # Booking and login request models
+        │   ├── stepdefinitions/       # Cucumber steps and validations
+        │   ├── hooks/                 # Before and After scenario hooks
+        │   └── utils/                 # API client, configuration and test data
+        └── resources/
+            ├── config.properties
+            ├── features/
+            │   ├── authentication.feature
+            │   ├── createBooking.feature
+            │   ├── getBooking.feature
+            │   ├── updateBooking.feature
+            │   ├── deleteBooking.feature
+            │   ├── bookingEndToEnd.feature
+            │   ├── roomCatalog.feature
+            │   └── healthCheck.feature
+            ├── schemas/             # JSON schemas used in validations
+            └── spec/                # API specification reference
+```
+
+The `target/` directory is generated by Maven after execution and contains the test results.
+
+## 📊 Test Reports
+
+After running the suite, open the following files:
+
+| Report | Location |
+| --- | --- |
+| Cucumber HTML report | `target/cucumber-reports.html` |
+| Cucumber JSON report | `target/cucumber.json` |
+| Maven Surefire reports | `target/surefire-reports/` |
+
+To view the HTML report, open `target/cucumber-reports.html` in a web browser. It shows the executed scenarios and their results. The JSON report contains detailed scenario-level execution data.
+
+## 🛠️ Framework Design
+
+- **Feature files:** Describe test behaviour in readable Given–When–Then steps.
+- **Step definitions:** Call the API and validate expected results.
+- **Models:** Represent booking and authentication request data.
+- **Utilities:** Centralise request handling, configuration, reusable test data and scenario context.
+- **Hooks:** Log the start and completion of each scenario.
+
+Booking test data uses future dates and selects room information from the demo service. Because the service is shared, room availability and test results can vary between runs.
+
+## ⚠️ Known Issues and Limitations
+
+The application under test is a public demonstration service. During execution, some booking endpoints have returned **HTTP 409 (Conflict)** or **HTTP 500 (Internal Server Error)**. These responses can affect booking creation, retrieval, updates, deletion and health checks.
+
+The automated tests retain their expected assertions and report unexpected responses as failures. See the supplied observation report for the specific issues reproduced during testing.
+
+## 🔧 Troubleshooting
+
+| Issue | What to check |
+| --- | --- |
+| Tests do not start | Verify Java 17, Maven and the selected JUnit runner |
+| Maven dependencies are missing | Refresh the Maven project in Eclipse |
+| Authentication fails | Confirm the configured credentials and the availability of the authentication API |
+| Booking creation returns 409 | Check room availability and booking dates on the shared service |
+| API returns 500 | Review the response and record the behaviour in the observation report |
+| HTML report is not visible | Run the tests, then check `target/cucumber-reports.html` |
+
+## 🔗 Repository
+
+[Hotel Booking API Automation – GitHub](https://github.com/mahalakshmi-automation/hotel-booking-api-tests)
