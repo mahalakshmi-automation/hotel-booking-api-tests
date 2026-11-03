@@ -20,9 +20,9 @@ public class GetBookingSteps {
         context.response(ApiUtils.get("/booking/" + context.bookingId(), context.token()));
     }
 
-    @When("I retrieve booking ID {int} without authentication")
-    public void getById(int id) {
-        context.response(ApiUtils.get("/booking/" + id, null));
+    @When("I request a booking that does not exist")
+    public void missingBooking() {
+        context.response(ApiUtils.get("/booking/999999999", context.token()));
     }
 
     @Then("the booking response should match its JSON schema")

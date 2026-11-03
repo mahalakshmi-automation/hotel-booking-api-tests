@@ -28,4 +28,29 @@ Feature: Create a hotel booking
       | field     |
       | firstname |
       | lastname  |
-      | email     |
+      | bookingdates |
+
+  @positive @regression @known-service-issue
+  Scenario Outline: Optional contact fields may be omitted
+    When I submit a booking missing the "<field>" field
+    Then the response status should be 201
+    And the response should contain a booking ID
+
+    Examples:
+      | field |
+      | email |
+      | phone |
+
+  @negative @regression @known-service-issue
+  Scenario Outline: Guest cannot book with invalid contact or name information
+    When I submit a booking with an invalid "<field>" value of "<value>"
+    Then the response status should be 400
+
+    Examples:
+      | field     | value            |
+      | firstname | A                |
+      | lastname  | B                |
+      | email     | not-an-email     |
+      | phone     | 123              |
+      | firstname |                  |
+      | lastname  |                  |

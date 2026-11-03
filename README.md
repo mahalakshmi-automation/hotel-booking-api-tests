@@ -5,7 +5,7 @@ Java 17 API regression tests for the [Restful Booker Platform](https://automatio
 ## Structure
 
 - `models`: Lombok POJOs serialized by Jackson
-- `utils`: configuration, API requests, scenario context and test-data builders
+- `utils`: configuration, API requests, room availability selection, scenario context and test-data builders
 - `stepdefinitions`: business-readable Cucumber steps and assertions
 - `hooks`: SLF4J scenario logging
 - `src/test/resources/features`: Gherkin scenarios, including scenario outlines
@@ -20,7 +20,7 @@ Override with Maven properties such as `-Dbase.url=...` or environment variables
 
 Run all scenarios with `mvn clean test`.
 Run positive creation scenarios with `mvn clean test -Dcucumber.filter.tags='@create and @positive'`.
-Run scenarios excluding **known external service failures** with `mvn clean test -Dcucumber.filter.tags='not @known-service-issue'`.
+Run scenarios excluding **known external service failures** with `mvn clean test -Dcucumber.filter.tags='not @known-service-issue'`. Note: remaining untagged scenarios can still fail if the service changes.
 
 Test failures are not suppressed: scenarios marked `@known-service-issue` still run in the full suite. They are tagged to distinguish observed server behavior from local framework problems.
 
@@ -28,6 +28,13 @@ Test failures are not suppressed: scenarios marked `@known-service-issue` still 
 
 Surefire results: `target/surefire-reports/`. Cucumber reports are configured in `TestRunner`.
 
+## Reviewer fixes
+
+See `REVIEW_FIXES.md` for the November 3 changes and known limitations.
+
 ## External API limitations
 
 The public booking service has returned HTTP 500 on GET `/booking/{id}` and health requests, and intermittent HTTP 409 on booking creation. Negative validation behavior also differs from the bundled OpenAPI specification. The tests preserve expected contract assertions; these issues require service-side investigation.
+
+## Important note about negative tests
+The published API description treats `email` and `phone` as optional for booking creation. Their absence is tested as a valid request. The publicly hosted service sometimes returns HTTP 500 even for expected validation failures; the tests intentionally report these differences rather than rewriting the expected behavior.

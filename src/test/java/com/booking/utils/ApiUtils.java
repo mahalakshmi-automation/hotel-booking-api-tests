@@ -8,9 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public final class ApiUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ApiUtils.class);
@@ -55,10 +52,13 @@ public final class ApiUtils {
     public static String loginToken() {
         LoginRequest credentials = new LoginRequest(Config.get("auth.username"), Config.get("auth.password"));
         Response response = post("/auth/login", credentials);
-        assertEquals(200, response.statusCode(), "Login response: " + response.asString());
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException("Authentication failed (HTTP " + response.statusCode() + "): " + response.asString());
+        }
         String token = response.jsonPath().getString("token");
-        assertNotNull(token, "Authentication token is missing");
-        assertFalse(token.isBlank(), "Authentication token is blank");
+        if (token == null || token.isBlank()) {
+            throw new IllegalStateException("Authentication response did not contain a token");
+        }
         return token;
     }
 

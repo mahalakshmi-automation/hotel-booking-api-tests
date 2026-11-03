@@ -1,14 +1,11 @@
 package com.booking.utils;
 
-import com.booking.models.BookingDates;
 import com.booking.models.BookingRequest;
-import java.time.LocalDate;
 import java.util.UUID;
 
-/** Builds valid request POJOs; scenario outlines provide the meaningful variations. */
+/** Builds independent bookings using an actually listed room and unoccupied dates. */
 public final class TestData {
-    private TestData() {
-    }
+    private TestData() { }
 
     public static BookingRequest booking() {
         return booking("Guest", "Tester", 45, 2);
@@ -19,16 +16,10 @@ public final class TestData {
         if (checkInAfterDays < 1 || stayLengthDays < 1) {
             throw new IllegalArgumentException("Stay dates must be in the future and checkout after checkin");
         }
+        BookingAvailability.Selection selection = BookingAvailability.find(checkInAfterDays, stayLengthDays);
         String unique = UUID.randomUUID().toString().substring(0, 8);
-        LocalDate checkin = LocalDate.now().plusDays(checkInAfterDays);
         return new BookingRequest(
-                Config.getInt("booking.roomid"),
-                firstName + unique,
-                lastName,
-                true,
-                new BookingDates(checkin.toString(), checkin.plusDays(stayLengthDays).toString()),
-                "guest." + unique + "@example.com",
-                "07123456789"
-        );
+                selection.roomId(), firstName + unique, lastName, true, selection.dates(),
+                "guest." + unique + "@example.com", "07123456789");
     }
 }
